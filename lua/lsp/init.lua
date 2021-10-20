@@ -1,6 +1,5 @@
 ----------- lspconfig language server setup-----------
 
-local nvim_lsp = require('lspconfig')
 
 -- Use an on_attach function to only map the following keys
   -- after the language server attaches to the current buffer
@@ -48,7 +47,7 @@ for _, lsp in ipairs(servers) do
 end ]]--
 
 ---------- nvim-compe ----------
-vim.o.completeopt = "menuone,noselect"
+--[[ vim.o.completeopt = "menuone,noselect"
 require'compe'.setup {
   enabled = true;
   autocomplete = true;
@@ -80,7 +79,7 @@ require'compe'.setup {
     ultisnips = true;
     luasnip = true;
   };
-}
+} ]]--
 
 -- for using snippets support like ultisnips
 local capabilities = vim.lsp.protocol.make_client_capabilities()
@@ -94,16 +93,119 @@ capabilities.textDocument.completion.completionItem.resolveSupport = {
 }
 
 
+ -- Setup nvim-cmp.
+ local cmp = require'cmp'
+
+ cmp.setup({
+   snippet = {
+     expand = function(args)
+       -- For `vsnip` user.
+       -- vim.fn["vsnip#anonymous"](args.body)
+
+       -- For `luasnip` user.
+       -- require('luasnip').lsp_expand(args.body)
+
+       -- For `ultisnips` user.
+        vim.fn["UltiSnips#Anon"](args.body)
+     end,
+   },
+   mapping = {
+     ['<C-d>'] = cmp.mapping.scroll_docs(-4),
+     ['<C-f>'] = cmp.mapping.scroll_docs(4),
+     ['<C-Space>'] = cmp.mapping.complete(),
+     ['<C-e>'] = cmp.mapping.close(),
+     ['<CR>'] = cmp.mapping.confirm({ select = true }),
+   },
+   sources = {
+      { name = 'nvim_lsp' },
+
+     -- For vsnip user.
+     -- { name = 'vsnip' },
+
+     -- For luasnip user.
+     -- { name = 'luasnip' },
+
+     -- For ultisnips user.
+     { name = 'ultisnips' },
+
+     { name = 'buffer' },
+   }
+ })
+
+
+
 --------- server setup calling --------
+
+ -- Setup lspconfig.
+ -- require('lspconfig')[%YOUR_LSP_SERVER%].setup {
+ --   capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
+ -- }
+
+
 require'lspconfig'.clangd.setup{
-  capabilities=capabilities
+  -- capabilities=capabilities
+  capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
 }
 
-require'lspconfig'.pyright.setup{
-  on_attach = on_attach
+
+-- Setup jedi-language-server
+require('lspconfig').jedi_language_server.setup {
+  capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
 }
 
-require'lspconfig'.vala_ls.setup{
-  cmd={'vala-language-server'},
-  capabilities=capabilities
+-- Setup bash-language-server
+require'lspconfig'.bashls.setup{
+  capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
 }
+
+require('lspconfig').vala_ls.setup{
+  -- capabilities=capabilities
+  cmd = { "vala-language-server" },
+  filetypes = { "vala", "genie" },
+  capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
+}
+
+
+require'lspconfig'.jdtls.setup{
+  capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
+}
+
+-- https://github.com/sumneko/lua-language-server/wiki/Build-and-Run-(Standalone)
+USER = vim.fn.expand('$USER')
+
+local sumneko_root_path = ""
+local sumneko_binary = ""
+
+if vim.fn.has("mac") == 1 then
+    sumneko_root_path = "/Users/" .. USER .. "/.config/nvim/lua-language-server"
+    sumneko_binary = "/Users/" .. USER .. "/.config/nvim/lua-language-server/bin/macOS/lua-language-server"
+elseif vim.fn.has("unix") == 1 then
+    sumneko_root_path = "/home/" .. USER .. "/lua-language-server"
+    sumneko_binary = "/home/" .. USER .. "/lua-language-server/bin/Linux/lua-language-server"
+else
+    print("Unsupported system for sumneko")
+end
+
+require'lspconfig'.sumneko_lua.setup {
+  cmd = {sumneko_binary, "-E", sumneko_root_path .. "/main.lua"},
+  settings = {
+      Lua = {
+          runtime = {
+              -- Tell the language server which version of Lua you're using (most likely LuaJIT in the case of Neovim)
+              version = 'LuaJIT',
+              -- Setup your lua path
+              path = vim.split(package.path, ';')
+          },
+          diagnostics = {
+              -- Get the language server to recognize the `vim` global
+              globals = {'vim'}
+          },
+          workspace = {
+              -- Make the server aware of Neovim runtime files
+              library = {[vim.fn.expand('$VIMRUNTIME/lua')] = true, [vim.fn.expand('$VIMRUNTIME/lua/vim/lsp')] = true}
+          }
+      }
+  },
+  capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
+}
+

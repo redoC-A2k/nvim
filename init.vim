@@ -27,7 +27,7 @@ set mouse=a
 "add intent in new line
 set autoindent
 set smartindent
-set completeopt=menuone,noselect
+set completeopt=menu,menuone,noselect
 
 """""""""""""""""""""PATHS"""""""""""""""""""""
 set path+=~/College/SEM-4/**
@@ -39,11 +39,17 @@ Plug 'tpope/vim-surround'
 Plug 'junegunn/vim-peekaboo'
 Plug 'chrisbra/colorizer'
 Plug 'cohama/lexima.vim'
-Plug 'hrsh7th/nvim-compe'
 Plug 'neovim/nvim-lspconfig'
+Plug 'hrsh7th/cmp-nvim-lsp'
+Plug 'hrsh7th/cmp-buffer'
+Plug 'hrsh7th/nvim-cmp'
+Plug 'quangnguyen30192/cmp-nvim-ultisnips'
 Plug 'dylanaraps/wal.vim'
 Plug 'arrufat/vala.vim'
 Plug 'mfussenegger/nvim-jdtls'
+Plug 'preservim/nerdtree'
+Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
+Plug 'ryanoasis/vim-devicons'
 call plug#end()
 
 """"""""""""wal colorscheme"""""""""
@@ -84,27 +90,26 @@ highlight Comment cterm=italic
 " - https://github.com/Valloric/YouCompleteMe
 " - https://github.com/nvim-lua/completion-nvim
 let g:UltiSnipsExpandTrigger="<tab>"
-let g:UltiSnipsJumpForwardTrigger="<c-b>"
-let g:UltiSnipsJumpBackwardTrigger="<c-z>"
+let g:UltiSnipsJumpForwardTrigger="<c-j>"
+let g:UltiSnipsJumpBackwardTrigger="<c-k>"
 
 " If you want :UltiSnipsEdit to split your window.
 let g:UltiSnipsEditSplit="vertical"
 
 """"""""""nvim-compe""""""""""
 " NOTE: Order is important. You can't lazy loading lexima.vim.
-let g:lexima_no_default_rules = v:true
-call lexima#set_default_rules()
-inoremap <silent><expr> <C-Space> compe#complete()
-inoremap <silent><expr> <CR>      compe#confirm(lexima#expand('<LT>CR>', 'i'))
-inoremap <silent><expr> <C-e>     compe#close('<C-e>')
-inoremap <silent><expr> <C-f>     compe#scroll({ 'delta': +4 })
-inoremap <silent><expr> <C-d>     compe#scroll({ 'delta': -4 })
-highlight link CompeDocumentation NormalFloat
+"let g:lexima_no_default_rules = v:true
+"call lexima#set_default_rules()
+"inoremap <silent><expr> <C-Space> compe#complete()
+"inoremap <silent><expr> <CR>      compe#confirm(lexima#expand('<LT>CR>', 'i'))
+"inoremap <silent><expr> <C-e>     compe#close('<C-e>')
+"inoremap <silent><expr> <C-f>     compe#scroll({ 'delta': +4 })
+"inoremap <silent><expr> <C-d>     compe#scroll({ 'delta': -4 })
+"highlight link CompeDocumentation NormalFloat
 
-
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-""""""""""""""""""""""""""""""""Custom key bindings""""""""""""""""""""""""""""""""""""
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""""""""""""""""""""""""
+""""""""""""""""Custom key bindings"""""""""""""""
+""""""""""""""""""""""""""""""""""""""""""""""""""
 nnoremap <C-I> i <ESC>r
 nnoremap <leader>1 1gt
 nnoremap <leader>2 2gt
@@ -124,5 +129,26 @@ nnoremap tl :tablast<CR>
 nnoremap tk :tabnext <CR>
 nnoremap tj :tabprevious <CR>
 
+"""""Nerdtree""""
+nnoremap <leader>n :NERDTreeFocus<CR>
+nnoremap <C-e> :NERDTreeToggle<CR>
+nnoremap <C-f> :NERDTreeFind<CR>
+
 """""""""""""Load init.lua"""""""""""""
 lua require("lsp")
+
+""""""""for nvim-jdtls """"""""""""
+if has('nvim-0.5')
+  "packadd nvim-jdtls
+  lua jdtls = require('jdtls')
+  augroup lsp
+    au!
+    au FileType java lua jdtls.start_or_attach({cmd={'launch_jdtls.sh'}})
+  augroup end
+endif
+
+"""""""Nerdtree""""""
+" Start NERDTree when Vim is started without file arguments.
+autocmd StdinReadPre * let s:std_in=1
+autocmd VimEnter * if argc() == 0 && !exists('s:std_in') | NERDTree | endif
+
